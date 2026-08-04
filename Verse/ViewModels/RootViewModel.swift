@@ -18,4 +18,22 @@ final class RootViewModel {
             phase = .authentication
         }
     }
+
+    func finishAuthentication() {
+        withAnimation(.easeInOut(duration: Self.phaseTransitionDuration)) {
+            phase = .userType
+        }
+    }
+
+    func returnToAuthentication() {
+        withAnimation(.easeInOut(duration: Self.phaseTransitionDuration)) {
+            phase = .authentication
+        }
+    }
+
+    func finishUserType() {
+        withAnimation(.easeInOut(duration: Self.phaseTransitionDuration)) {
+            phase = .main
+        }
+    }
 }

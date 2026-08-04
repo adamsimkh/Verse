@@ -30,10 +30,14 @@ struct RootView: View {
                 SplashView(onComplete: viewModel.finishSplash)
                     .transition(.opacity)
             case .authentication:
-                AuthenticationView()
+                AuthenticationView(onAuthenticated: viewModel.finishAuthentication)
                     .transition(.opacity)
             case .userType:
-                UserTypeView()
+                UserTypeView(
+                    onBack: viewModel.returnToAuthentication,
+                    onSkip: viewModel.finishUserType,
+                    onContinue: viewModel.finishUserType
+                )
                     .transition(.opacity)
             case .main:
                 MainTabView()

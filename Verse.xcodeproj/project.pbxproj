@@ -10,9 +10,22 @@
 		CE8FDFFE3007A6CC00F3D48B /* Verse.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Verse.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		CE9AD92A300E19F00041B4D5 /* Exceptions for "Verse" folder in "Verse" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CE8FDFFD3007A6CC00F3D48B /* Verse */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CE8FE0003007A6CC00F3D48B /* Verse */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CE9AD92A300E19F00041B4D5 /* Exceptions for "Verse" folder in "Verse" target */,
+			);
 			path = Verse;
 			sourceTree = "<group>";
 		};
