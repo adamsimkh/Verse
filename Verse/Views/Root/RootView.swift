@@ -16,7 +16,12 @@ struct RootView: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
                     case .bookDetail(let bookID):
-                        BookDetailView(book: BookCatalog.book(withID: bookID) ?? BookCatalog.fireWeather)
+                        BookDetailView(
+                            book: BookCatalog.book(withID: bookID) ?? BookCatalog.fireWeather,
+                            onReadNow: { viewModel.showReader(id: bookID) }
+                        )
+                    case .reader(let bookID):
+                        ReaderView(book: BookCatalog.book(withID: bookID) ?? BookCatalog.fireWeather)
                     }
                 }
         }

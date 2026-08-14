@@ -7,7 +7,7 @@ struct ScrollEdgeBlur: View {
     var body: some View {
         Rectangle()
             .fill(.regularMaterial)
-            .frame(height: 80)
+            .frame(height: 180)
             .overlay {
                 Color.white.opacity(0.10)
             }

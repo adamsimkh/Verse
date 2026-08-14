@@ -40,4 +40,8 @@ final class RootViewModel {
     func showBook(id: Book.ID) {
         path.append(AppRoute.bookDetail(id))
     }
+
+    func showReader(id: Book.ID) {
+        path.append(AppRoute.reader(id))
+    }
 }

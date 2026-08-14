@@ -7,6 +7,7 @@ import SwiftUI
 
 struct BookDetailView: View {
     let book: Book
+    var onReadNow: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
     @State private var isInLibrary = false
@@ -30,7 +31,7 @@ struct BookDetailView: View {
                     .padding(.top, 40)
 
                     VStack(spacing: 18) {
-                        Button(action: {}) {
+                        Button(action: onReadNow) {
                             Text("Read now")
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundStyle(VerseColors.textMain)
@@ -42,15 +43,20 @@ struct BookDetailView: View {
                         Button {
                             isInLibrary.toggle()
                         } label: {
-                            Text(isInLibrary ? "In library" : "Add to library")
+                            Text(isInLibrary ? "Added to library" : "Add to library")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundStyle(VerseColors.textMain)
+                                .contentTransition(.identity)
+                                .animation(nil, value: isInLibrary)
+                                .foregroundStyle(isInLibrary ? VerseColors.secondaryText.opacity(0.45) : VerseColors.textMain)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 58)
-                                .background(VerseColors.background, in: Capsule())
+                                .background(
+                                    isInLibrary ? VerseColors.buttonBorder.opacity(0.22) : VerseColors.background,
+                                    in: Capsule()
+                                )
                                 .overlay {
                                     Capsule()
-                                        .stroke(VerseColors.buttonBorder, lineWidth: 1.5)
+                                        .stroke(VerseColors.buttonBorder.opacity(isInLibrary ? 0 : 1), lineWidth: 1.5)
                                 }
                         }
                         .buttonStyle(DetailSecondaryButtonStyle())
