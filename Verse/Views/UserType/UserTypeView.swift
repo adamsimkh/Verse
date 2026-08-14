@@ -25,12 +25,13 @@ struct UserTypeView: View {
                         Spacer()
 
                         Button("Skip", action: onSkip)
-                            .font(.system(size: 22, weight: .regular))
-                            .frame(width: 70, height: 40)
+                            .font(.system(size: 22, weight: .medium))
+                            .frame(width: 84, height: 40)
                             .buttonStyle(.glass)
                             .buttonBorderShape(.capsule)
+                            .controlSize(.large)
                     }
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 22)
                     .padding(.top, 6)
 
                     VStack(alignment: .leading, spacing: 12) {
@@ -166,7 +167,7 @@ private struct CircularIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 18, weight: .medium))
+                .font(.system(size: 24, weight: .medium))
                 .foregroundStyle(VerseColors.textMain)
                 .frame(width: 40, height: 40)
         }

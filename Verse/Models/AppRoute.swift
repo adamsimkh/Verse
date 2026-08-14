@@ -6,5 +6,5 @@
 import Foundation
 
 enum AppRoute: Hashable {
-    case bookDetail
+    case bookDetail(Book.ID)
 }

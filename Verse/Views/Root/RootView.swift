@@ -15,8 +15,8 @@ struct RootView: View {
             rootContent
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
-                    case .bookDetail:
-                        BookDetailView()
+                    case .bookDetail(let bookID):
+                        BookDetailView(book: BookCatalog.book(withID: bookID) ?? BookCatalog.fireWeather)
                     }
                 }
         }
@@ -40,7 +40,7 @@ struct RootView: View {
                 )
                     .transition(.opacity)
             case .main:
-                MainTabView()
+                MainTabView(onSelectBook: viewModel.showBook)
                     .transition(.opacity)
             }
         }

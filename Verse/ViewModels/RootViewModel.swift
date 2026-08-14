@@ -36,4 +36,8 @@ final class RootViewModel {
             phase = .main
         }
     }
+
+    func showBook(id: Book.ID) {
+        path.append(AppRoute.bookDetail(id))
+    }
 }
