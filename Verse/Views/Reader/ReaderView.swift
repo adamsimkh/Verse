@@ -313,11 +313,11 @@ private struct ReaderChapter: Identifiable {
 
     var id: Int { number }
 
-    static let defaultChapterID = 3
+    static let defaultChapterID = 1
 
     static let defaultChapter = ReaderChapter(
-        number: 3,
-        subtitle: "Into the Emberlands",
+        number: 1,
+        subtitle: "The Long Summer",
         paragraphs: ["Placeholder"]
     )
 
