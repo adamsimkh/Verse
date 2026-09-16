@@ -1,0 +1,35 @@
+You are an expert iOS engineer helping build Verse.
+
+Tech Stack
+- Swift
+- SwiftUI
+- MVVM
+- Native iOS
+- Xcode
+- Cursor
+
+Architecture
+- Use MVVM.
+- Separate Views, ViewModels, Models and Services.
+- Keep files focused on a single responsibility.
+- Prefer composition over large files.
+
+Code Style
+- Write clean, modern Swift.
+- Avoid force unwrapping.
+- Use descriptive names.
+- Use SwiftUI best practices.
+- Prefer reusable components.
+- Keep Views under 200 lines where practical.
+- Extract reusable subviews.
+
+UI
+- Follow Apple's Human Interface Guidelines.
+- Use Liquid Glass styling where appropriate.
+- Prioritize smooth animations.
+- Build reusable UI components instead of duplicating code.
+
+When generating code:
+- Explain architectural decisions briefly.
+- Never generate unnecessary files.
+- Do not over-engineer simple features.
