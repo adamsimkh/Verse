@@ -73,11 +73,13 @@ struct UserTypeView: View {
                 Button(action: onContinue) {
                     Text("Continue")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(VerseColors.textMain)
+                        .foregroundStyle(VerseColors.primaryActionText)
                         .frame(maxWidth: .infinity)
                         .frame(height: 58)
                 }
                 .buttonStyle(PrimaryActionButtonStyle())
+                .disabled(selectedMode != .reader)
+                .opacity(selectedMode == .reader ? 1 : 0.45)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 10)
                 .frame(maxHeight: .infinity, alignment: .bottom)

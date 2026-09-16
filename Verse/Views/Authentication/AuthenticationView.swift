@@ -3,10 +3,16 @@
 //  Verse
 //
 
+import AuthenticationServices
+import GoogleSignIn
 import SwiftUI
+import UIKit
 
 struct AuthenticationView: View {
-    var onAuthenticated: () -> Void = {}
+    var onAppleAuthorization: (ASAuthorizationAppleIDCredential) -> Void = { _ in }
+    var onGoogleAuthorization: (String, String, String) -> Void = { _, _, _ in }
+    @State private var googleAuthorizationError: String?
+    @State private var googleSignInCoordinator = GoogleSignInCoordinator()
 
     var body: some View {
         GeometryReader { proxy in
@@ -28,12 +34,15 @@ struct AuthenticationView: View {
                         .padding(.top, 15)
 
                     VStack(spacing: 20) {
-                        AuthenticationButton(title: "Continue with Apple", icon: .apple) {
-                            onAuthenticated()
-                        }
+                        AppleAuthenticationButton(onAuthorization: onAppleAuthorization)
 
                         AuthenticationButton(title: "Continue with Google", icon: .google) {
-                            onAuthenticated()
+                            googleSignInCoordinator.begin(
+                                onAuthorization: onGoogleAuthorization,
+                                onFailure: { error in
+                                    googleAuthorizationError = error.localizedDescription
+                                }
+                            )
                         }
                     }
                     .padding(.top, 43)
@@ -52,14 +61,23 @@ struct AuthenticationView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .alert("Google sign-in couldn’t be completed", isPresented: Binding(
+            get: { googleAuthorizationError != nil },
+            set: { if !$0 { googleAuthorizationError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(googleAuthorizationError ?? "Please try again.")
+        }
     }
 }
 
 #Preview {
-    AuthenticationView(onAuthenticated: {})
+    AuthenticationView()
 }
 
 private struct StoryCollage: View {
+    @Environment(\.colorScheme) private var colorScheme
     @State private var dragOffsets: [String: CGSize] = [:]
     @State private var activeTileID: String?
     @State private var dragStartOffset = CGSize.zero
@@ -86,7 +104,7 @@ private struct StoryCollage: View {
                         entryOffset: proxy.size.width * tile.entryDirection * 1.25,
                         dragOffset: dragOffsets[tile.id] ?? .zero
                     )
-                    .opacity(tile.id == "StoryTile5" ? 0.62 : 1)
+                    .opacity(colorScheme == .dark ? 1 : (tile.id == "StoryTile5" ? 0.62 : 1))
                     .zIndex(activeTileID == tile.id ? 100 : tile.layer)
                 }
             }
@@ -201,6 +219,8 @@ private struct AnimatedStoryTile: View {
     let entryOffset: CGFloat
     let dragOffset: CGSize
 
+    @Environment(\.colorScheme) private var colorScheme
+
     @State private var horizontalOffset: CGFloat
 
     init(
@@ -217,9 +237,17 @@ private struct AnimatedStoryTile: View {
     }
 
     var body: some View {
-        Image(tile.id)
-            .resizable()
-            .scaledToFit()
+        Group {
+            if colorScheme == .dark {
+                Image("Dark\(tile.id)")
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                Image(tile.id)
+                    .resizable()
+                    .scaledToFit()
+            }
+        }
             .frame(width: tileWidth)
             .rotationEffect(.degrees(tile.rotationDegrees))
             .offset(
@@ -230,6 +258,10 @@ private struct AnimatedStoryTile: View {
                 await animateAcrossScreen()
             }
             .allowsHitTesting(false)
+    }
+
+    private var tileHeight: CGFloat {
+        tileWidth * tile.heightRatio
     }
 
     private func animateAcrossScreen() async {
@@ -250,7 +282,6 @@ private struct AnimatedStoryTile: View {
 
 private struct AuthenticationButton: View {
     enum Icon {
-        case apple
         case google
     }
 
@@ -263,9 +294,6 @@ private struct AuthenticationButton: View {
             HStack(spacing: 12) {
                 Group {
                     switch icon {
-                    case .apple:
-                        Image(systemName: "apple.logo")
-                            .font(.system(size: 25, weight: .medium))
                     case .google:
                         Image("GoogleG")
                             .resizable()
@@ -285,6 +313,179 @@ private struct AuthenticationButton: View {
         }
         .buttonStyle(AuthenticationButtonStyle())
         .accessibilityLabel(title)
+    }
+}
+
+private struct AppleAuthenticationButton: View {
+    let onAuthorization: (ASAuthorizationAppleIDCredential) -> Void
+    @State private var authorizationError: String?
+    @State private var signInCoordinator = AppleSignInCoordinator()
+
+    var body: some View {
+        Button {
+            signInCoordinator.begin(
+                onAuthorization: onAuthorization,
+                onFailure: { error in
+                    if let authorizationError = error as? ASAuthorizationError,
+                       authorizationError.code == .canceled {
+                        return
+                    }
+                    authorizationError = error.localizedDescription
+                }
+            )
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "apple.logo")
+                    .font(.system(size: 23, weight: .medium))
+                    .frame(width: 31, height: 31)
+
+                Text("Continue with Apple")
+                    .font(.system(size: 18, weight: .medium))
+            }
+            .foregroundStyle(VerseColors.textMain)
+            .frame(maxWidth: .infinity)
+            .frame(height: 58)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(AuthenticationButtonStyle())
+        .accessibilityLabel("Continue with Apple")
+        .alert("Apple sign-in couldn’t be completed", isPresented: Binding(
+            get: { authorizationError != nil },
+            set: { if !$0 { authorizationError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(authorizationError ?? "Please try again.")
+        }
+    }
+}
+
+private final class AppleSignInCoordinator: NSObject,
+    ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private var authorizationController: ASAuthorizationController?
+    private var onAuthorization: ((ASAuthorizationAppleIDCredential) -> Void)?
+    private var onFailure: ((Error) -> Void)?
+
+    func begin(
+        onAuthorization: @escaping (ASAuthorizationAppleIDCredential) -> Void,
+        onFailure: @escaping (Error) -> Void
+    ) {
+        self.onAuthorization = onAuthorization
+        self.onFailure = onFailure
+
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = [.fullName, .email]
+
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        authorizationController = controller
+        controller.performRequests()
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        defer { clearCallbacks() }
+
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+            onFailure?(AppleSignInError.unexpectedCredential)
+            return
+        }
+        onAuthorization?(credential)
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithError error: Error
+    ) {
+        defer { clearCallbacks() }
+        onFailure?(error)
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        let windowScenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+
+        if let window = windowScenes
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow) {
+            return window
+        }
+
+        guard let windowScene = windowScenes.first else {
+            preconditionFailure("Apple sign-in needs an active window scene.")
+        }
+
+        return UIWindow(windowScene: windowScene)
+    }
+
+    private func clearCallbacks() {
+        authorizationController = nil
+        onAuthorization = nil
+        onFailure = nil
+    }
+}
+
+private enum AppleSignInError: LocalizedError {
+    case unexpectedCredential
+
+    var errorDescription: String? {
+        "Apple did not return a usable account. Please try again."
+    }
+}
+
+private final class GoogleSignInCoordinator {
+    func begin(
+        onAuthorization: @escaping (String, String, String) -> Void,
+        onFailure: @escaping (Error) -> Void
+    ) {
+        guard let presentingViewController = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .rootViewController else {
+            onFailure(GoogleSignInError.missingPresentationContext)
+            return
+        }
+
+        GIDSignIn.sharedInstance.signIn(withPresenting: presentingViewController) { result, error in
+            if let error {
+                DispatchQueue.main.async {
+                    onFailure(error)
+                }
+                return
+            }
+
+            guard let user = result?.user,
+                  let userID = user.userID,
+                  let email = user.profile?.email else {
+                DispatchQueue.main.async {
+                    onFailure(GoogleSignInError.missingAccountDetails)
+                }
+                return
+            }
+
+            let displayName = user.profile?.name ?? "Verse Reader"
+            DispatchQueue.main.async {
+                onAuthorization(userID, displayName, email)
+            }
+        }
+    }
+}
+
+private enum GoogleSignInError: LocalizedError {
+    case missingPresentationContext
+    case missingAccountDetails
+
+    var errorDescription: String? {
+        switch self {
+        case .missingPresentationContext:
+            "Google sign-in could not find a window to present from. Please try again."
+        case .missingAccountDetails:
+            "Google did not return a usable account. Please try again."
+        }
     }
 }
 

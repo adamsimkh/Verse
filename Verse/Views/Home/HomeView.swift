@@ -8,6 +8,13 @@ import SwiftUI
 struct HomeView: View {
     var onProfileTap: () -> Void = {}
     var onSelectBook: (Book.ID) -> Void = { _ in }
+    var onOpenReader: (Book.ID) -> Void = { _ in }
+    var progressText: (Book) -> String = { $0.progress ?? "0% Complete" }
+    var profileImageData: Data?
+    var continueReadingBooks: [Book] = BookCatalog.continueReading
+    var trendingBooks: [Book] = BookCatalog.trending
+    var recommendedBooks: [Book] = BookCatalog.forYou
+    var onSeeAll: (HomeBookCollection) -> Void = { _ in }
 
     @State private var topBlurOpacity = 0.0
 
@@ -22,27 +29,35 @@ struct HomeView: View {
                         .padding(.horizontal, HomeMetrics.horizontalPadding)
                         .padding(.top, 6)
 
-                    BookShelf(
-                        title: "Continue Reading",
-                        books: BookCatalog.continueReading,
-                        showsProgress: true,
-                        onSelectBook: onSelectBook
-                    )
-                    .padding(.top, 44)
+                    if !continueReadingBooks.isEmpty {
+                        BookShelf(
+                            title: "Continue Reading",
+                            books: continueReadingBooks,
+                            showsProgress: true,
+                            onSelectBook: onOpenReader,
+                            progressText: progressText,
+                            onSeeAll: { onSeeAll(.continueReading) }
+                        )
+                        .padding(.top, 44)
+                    }
 
                     BookShelf(
                         title: "Trending Now",
-                        books: BookCatalog.trending,
+                        books: trendingBooks,
                         showsProgress: false,
-                        onSelectBook: onSelectBook
+                        onSelectBook: onSelectBook,
+                        progressText: progressText,
+                        onSeeAll: { onSeeAll(.trending) }
                     )
                     .padding(.top, 44)
 
                     BookShelf(
                         title: "For You",
-                        books: BookCatalog.forYou,
+                        books: recommendedBooks,
                         showsProgress: false,
-                        onSelectBook: onSelectBook
+                        onSelectBook: onSelectBook,
+                        progressText: progressText,
+                        onSeeAll: { onSeeAll(.forYou) }
                     )
                     .padding(.top, 44)
                 }
@@ -70,11 +85,7 @@ struct HomeView: View {
             Spacer()
 
             Button(action: onProfileTap) {
-                Image("ProfileAvatar")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 48, height: 48)
-                    .clipShape(Circle())
+                ProfileAvatarView(imageData: profileImageData, size: 48)
                     .overlay {
                         Circle()
                             .stroke(.white.opacity(0.72), lineWidth: 1)
@@ -100,10 +111,12 @@ private struct BookShelf: View {
     let books: [Book]
     let showsProgress: Bool
     let onSelectBook: (Book.ID) -> Void
+    let progressText: (Book) -> String
+    let onSeeAll: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
-            Button(action: {}) {
+            Button(action: onSeeAll) {
                 HStack(spacing: 10) {
                     Text(title)
                         .font(VerseTypography.sectionTitle)
@@ -121,7 +134,12 @@ private struct BookShelf: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: 16) {
                     ForEach(books) { book in
-                        BookCard(book: book, showsProgress: showsProgress, onSelect: onSelectBook)
+                        BookCard(
+                            book: book,
+                            showsProgress: showsProgress,
+                            progressText: progressText,
+                            onSelect: onSelectBook
+                        )
                     }
                 }
                 .padding(.horizontal, HomeMetrics.horizontalPadding)
@@ -133,6 +151,7 @@ private struct BookShelf: View {
 private struct BookCard: View {
     let book: Book
     let showsProgress: Bool
+    let progressText: (Book) -> String
     let onSelect: (Book.ID) -> Void
 
     var body: some View {
@@ -148,7 +167,7 @@ private struct BookCard: View {
                     .minimumScaleFactor(0.82)
                     .padding(.top, 15)
 
-                Text(showsProgress ? (book.progress ?? "") : book.author)
+                Text(showsProgress ? progressText(book) : book.author)
                     .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(VerseColors.secondaryText)
                     .lineLimit(1)
@@ -162,44 +181,8 @@ private struct BookCard: View {
         .accessibilityLabel(book.title)
     }
 
-    @ViewBuilder
     private var cover: some View {
-        if let imageName = book.coverAssetName {
-            Image(imageName)
-                .resizable()
-                .scaledToFill()
-        } else {
-            PlaceholderCover(book: book)
-        }
-    }
-}
-
-private struct PlaceholderCover: View {
-    let book: Book
-
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            LinearGradient(
-                colors: coverColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            Text(book.coverTitle)
-                .font(.system(size: 28, weight: .bold, design: .serif))
-                .foregroundStyle(.white)
-                .lineLimit(2)
-                .padding(16)
-        }
-    }
-
-    private var coverColors: [Color] {
-        switch book.id {
-        case "martyr": [.black, .gray]
-        case "shadows": [.brown, .black]
-        case "north-woods": [.cyan, .blue]
-        default: [.red.opacity(0.85), .black]
-        }
+        BookCoverArtwork(book: book)
     }
 }
 

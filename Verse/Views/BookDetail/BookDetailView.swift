@@ -7,10 +7,11 @@ import SwiftUI
 
 struct BookDetailView: View {
     let book: Book
+    var isInLibrary = false
     var onReadNow: () -> Void = {}
+    var onToggleLibrary: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
-    @State private var isInLibrary = false
     @State private var topBlurOpacity = 0.0
 
     var body: some View {
@@ -34,14 +35,14 @@ struct BookDetailView: View {
                         Button(action: onReadNow) {
                             Text("Read now")
                                 .font(.system(size: 20, weight: .medium))
-                                .foregroundStyle(VerseColors.textMain)
+                                .foregroundStyle(VerseColors.primaryActionText)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 58)
                         }
                         .buttonStyle(DetailPrimaryButtonStyle())
 
                         Button {
-                            isInLibrary.toggle()
+                            onToggleLibrary()
                         } label: {
                             Text(isInLibrary ? "Added to library" : "Add to library")
                                 .font(.system(size: 20, weight: .medium))
@@ -116,7 +117,7 @@ struct BookDetailView: View {
 
     private var bookSummary: some View {
         HStack(alignment: .center, spacing: 16) {
-            BookCover(book: book)
+            BookCoverArtwork(book: book)
                 .frame(width: 132, height: 126)
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
 
@@ -196,30 +197,6 @@ private struct DetailSection<Content: View>: View {
             }
 
             content
-        }
-    }
-}
-
-private struct BookCover: View {
-    let book: Book
-
-    var body: some View {
-        if let assetName = book.coverAssetName {
-            Image(assetName)
-                .resizable()
-                .scaledToFill()
-        } else {
-            LinearGradient(
-                colors: [.red.opacity(0.85), .black],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .overlay(alignment: .bottomLeading) {
-                Text(book.coverTitle)
-                    .font(.system(size: 24, weight: .bold, design: .serif))
-                    .foregroundStyle(.white)
-                    .padding(14)
-            }
         }
     }
 }
